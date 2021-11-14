@@ -1,0 +1,123 @@
+---
+title: "ANA 515 Assignment 2, Loading, Saving, and Describing Data"
+author: "Christopher Spann"
+date: "11/10/2021"
+fontsize: 12pt
+output: 
+  html_document:
+   theme:
+      bootswatch: minty
+---
+
+```{r setup, include = TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#This next chunk is a description of the data.
+```
+
+The police killings data set can be found on the Github data repository. The data contains information on police killings in the United States during the first 5 months of 2015. Records come from the Guardian's database on police killings as well as census data from the American Community Survey that was combined to allow users of the data to look at demographic and economic information about the people and neighborhoods involved. The data to be analyzed comes in the form of a csv as listed on Github, this csv makes the data comma delimited. The data is reporting relevant information about individuals killed by police or other law enforcement agencies in the United States, and the data was collected by the Guardian as part of The Counted project. As mentioned in a FiveThirtyEight article describing the project, "Where Police Have Killed Americans in 2015," official statistics on police killings are often inaccurate or flawed, so the purpose of The Counted is to build a data set by combining media coverage, reader submissions, and other open source efforts that are verified in order to bring better transparency to these types of problems in the United States. More specifically, users of the data can look into research questions such as:
+
+Do police killings happen more often in poor or wealthy neighborhoods?
+
+Is a particular race more likely to be involved in a police killing?
+
+Is being armed a significant factor that results in an individual being killed by a law enforcement officer?
+
+
+
+```{r}
+#This next chunk is to read the data into R. The data is stored in csv format on the Github site, so I will be using the read_csv function from the readr package in order to read the comma delimited file. I called the readr package using the library function and then created a saved url to reference with the read_csv function. I saved the data as a data frame called "police_killings".
+```
+
+```{r}
+library(readr)
+library(dplyr)
+url <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/police-killings/police_killings.csv"
+police_killings <- read_csv(url)
+```
+
+```{r}
+#This next chunk is to clean some of the data in R. We will re-name some field names to be clearer. Then we will concatenate the all of the date fields to have a new variable called 'date'.
+```
+
+```{r}
+names(police_killings)[names(police_killings) == 'cause'] <- 'cause_of_death'
+names(police_killings)[names(police_killings) == 'pop'] <- 'tract_population'
+names(police_killings)[names(police_killings) == 'share_white'] <- 'pop_percentage_white'
+names(police_killings)[names(police_killings) == 'share_black'] <- 'pop_percentage_black'
+names(police_killings)[names(police_killings) == 'share_hispanic'] <- 'pop_percentage_hispanic'
+names(police_killings)[names(police_killings) == 'p_income'] <- 'median_personal_income_tract'
+names(police_killings)[names(police_killings) == 'h_income'] <- 'median_household_income_tract'
+names(police_killings)[names(police_killings) == 'urate'] <- 'unemployment_rate_tract'
+names(police_killings)[names(police_killings) == 'county_bucket'] <- 'county_household_income_quintile'
+names(police_killings)[names(police_killings) == 'nat_bucket'] <- 'nation_household_income_quintile'
+names(police_killings)[names(police_killings) == 'county_income'] <- 'county_median_income'
+names(police_killings)[names(police_killings) == 'comp_income'] <- 'household_income/county_median_income'
+names(police_killings)[names(police_killings) == 'pov'] <- 'poverty_rate_tract'
+library(tidyverse)
+library(lubridate)
+police_killings$date <- paste(police_killings$year, police_killings$month, police_killings$day, sep="-") %>% ymd() %>% as.Date()
+```
+
+```{r}
+#This next chunk is to describe some characteristics of the data. I will be using inline code to describe the number of rows, number of columns, and include a table with all of the variables and a description of what it measures.
+```
+
+This dataframe has `r nrow(police_killings)` rows and `r ncol(police_killings)` columns. The original data set has 34 columns, but when cleaning the data, I added another column to concatenate all of the date fields into one column. The names of the columns and a brief description of each are in the table below:
+
+```{r}
+column_names <- c(ls(police_killings))
+column_description <- c("Age of deceased individual", "Whether deceased individual was armed", "Cause of death for deceased individual", "City where incident occured", "Share of 25+ population with BA or higher", "County FIPS code", "Household income, quintile within county", "Combined county ID code", "County-level median household income", "Date incident occured", "Day of incident", "Gender of deceased individual", "Combined tract ID code", "Tract-level median household income divided by county-level median household income", "Latitude, geocoded from address", "Agency involved in incident", "Longitude, geocoded from address", "Tract-level median household income", "Tract-level median personal income", "Month of killing", "Name of deceased individual", "Tract description", "Household income, quintile nationally", "Share of population that is black (alone, not in combination)", "Share of population that is Hispanic/Latino (any race)", "Share of population that is non-Hispanic white", "Tract-level poverty rate (official)", "	Race/ethnicity of deceased individual", "State where incident occurred", "State FIPS code", "Address/intersection where incident occurred", "Tract ID code", "Population of Tract where incident occured", "Tract-level unemployment rate", "Year of incident")
+table.df <- data.frame(column_names, column_description)
+knitr::kable(table.df, "simple", col.names = c("Column Name", "Column Description"), align = c("c", "c"))
+```
+```{r}
+#I have decided to show summaries of county_median_income, median_household_income_tract, and unemployment_rate_tract, so I will create a subset of the police_killings dataframe that only includes these three variables.
+```
+
+```{r}
+subset_police_killings <- police_killings[,c("county_median_income", "median_household_income_tract", "unemployment_rate_tract")]
+```
+
+```{r}
+#This next chunk is to provide some summary statistics of 3 columns in the dataframe. 
+```
+
+```{r}
+#Summary of all variables
+summary_subset_police_killings <- summary(subset_police_killings)
+summary_subset_police_killings
+
+#Calculations for summary statistics
+mean_county_median_income <- mean(subset_police_killings$`county_median_income`, na.rm = TRUE)
+mean_median_household_income_tract <- mean(subset_police_killings$`median_household_income_tract`, na.rm = TRUE)
+mean_unemployment_rate_tract <- mean(subset_police_killings$`unemployment_rate_tract`, na.rm = TRUE)
+min_county_median_income <- min(subset_police_killings$`county_median_income`, na.rm = TRUE)
+min_median_household_income_tract <- min(subset_police_killings$`median_household_income_tract`, na.rm = TRUE)
+min_unemployment_rate_tract <- min(subset_police_killings$`unemployment_rate_tract`, na.rm = TRUE)
+max_county_median_income <- max(subset_police_killings$`county_median_income`, na.rm = TRUE)
+max_median_household_income_tract <- max(subset_police_killings$`median_household_income_tract`, na.rm = TRUE)
+max_unemployment_rate_tract <- max(subset_police_killings$`unemployment_rate_tract`, na.rm = TRUE)
+missing_values_county_median_income <- sum(is.na(subset_police_killings$`county_median_income`))
+missing_values_median_household_income_tract <- sum(is.na(subset_police_killings$`median_household_income_tract`))
+missing_values_unemployment_rate_tract <- sum(is.na(subset_police_killings$`unemployment_rate_tract`))
+
+#Mean Values of the Columns
+mean_county_median_income
+mean_median_household_income_tract
+mean_unemployment_rate_tract
+#Minimum Values of the Columns
+min_county_median_income
+min_median_household_income_tract
+min_unemployment_rate_tract
+#Maximum Values of the Columns
+max_county_median_income
+max_median_household_income_tract
+max_unemployment_rate_tract
+#Number of Missing Values
+missing_values_county_median_income
+missing_values_median_household_income_tract
+missing_values_unemployment_rate_tract
+```
